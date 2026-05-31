@@ -17,10 +17,8 @@ export default function AddPage() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card title={<Space><Link href="/"><Button icon={<ArrowLeftOutlined />}>返回</Button></Link><span style={{ fontSize: 20, fontWeight: 'bold' }}>添加文言文</span></Space>}>
-        <WenyanwenForm onSubmit={handleSubmit} />
-      </Card>
+    <div>
+      <WenyanwenForm onSubmit={handleSubmit} />
     </div>
   );
 }

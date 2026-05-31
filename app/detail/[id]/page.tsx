@@ -160,29 +160,22 @@ export default function DetailPage() {
     );
   };
 
-  if (loading) return <div className="empty-state"><Card loading={true} /></div>;
-  if (!data) return (
-    <div className="empty-state">
-      <Card><div>数据不存在</div><Link href="/"><Button className="empty-state-button">返回列表</Button></Link></Card>
-    </div>
-  );
+  if (loading) return <div style={{ textAlign: 'center', padding: 50 }}><Card loading={true} /></div>;
+  if (!data) return <div style={{ textAlign: 'center', padding: 50 }}><Card>数据不存在</Card></div>;
 
   return (
-    <div className="detail-page">
-      <Card title={
-        <div className="detail-header">
-          <Space><Link href="/"><Button icon={<ArrowLeftOutlined />}>返回</Button></Link><span className="detail-header-title">{data.meta.title}</span></Space>
-          <Link href={`/edit/${data._id}`}><Button type="primary" icon={<EditOutlined />}>编辑</Button></Link>
-        </div>
-      }>
-        <Descriptions bordered column={2} style={{ marginBottom: 24 }}>
-          <Descriptions.Item label="标题">{data.meta.title}</Descriptions.Item>
-          <Descriptions.Item label="作者">{data.meta.author}</Descriptions.Item>
-          <Descriptions.Item label="教材" span={2}><Tag color="blue">{data.meta.book}</Tag></Descriptions.Item>
-        </Descriptions>
-        <Divider><Title level={4} style={{ margin: 0 }}>逐句对照</Title></Divider>
-        <div style={{ marginTop: 16 }}>{data.contents.map((sentence, index) => renderSentenceWithPinyin(sentence, index))}</div>
-      </Card>
+    <div>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 20, fontWeight: 'bold' }}>{data.meta.title}</span>
+        <Link href={`/edit/${data._id}`}><Button type="primary" icon={<EditOutlined />}>编辑</Button></Link>
+      </div>
+      <Descriptions bordered column={2} style={{ marginBottom: 24 }}>
+        <Descriptions.Item label="标题">{data.meta.title}</Descriptions.Item>
+        <Descriptions.Item label="作者">{data.meta.author}</Descriptions.Item>
+        <Descriptions.Item label="教材" span={2}><Tag color="blue">{data.meta.book}</Tag></Descriptions.Item>
+      </Descriptions>
+      <Divider><Title level={4} style={{ margin: 0 }}>逐句对照</Title></Divider>
+      <div>{data.contents.map((sentence, index) => renderSentenceWithPinyin(sentence, index))}</div>
     </div>
   );
 }

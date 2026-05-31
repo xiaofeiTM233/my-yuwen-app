@@ -76,25 +76,16 @@ export default function XuciPage() {
   }));
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card
-        title={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Space>
-              <Link href="/"><Button icon={<ArrowLeftOutlined />}>返回</Button></Link>
-              <span style={{ fontSize: 24, fontWeight: 'bold' }}>📖 文言虚词手册</span>
-            </Space>
-            <Search
-              placeholder="搜索虚词"
-              allowClear
-              onSearch={(value) => setKeyword(value)}
-              style={{ width: 300 }}
-            />
-          </div>
-        }
-      >
-        <Collapse items={collapseItems} defaultActiveKey={filteredData.length > 0 ? [filteredData[0].word] : []} />
-      </Card>
+    <div>
+      <div style={{ marginBottom: 16, textAlign: 'right' }}>
+        <Search
+          placeholder="搜索虚词"
+          allowClear
+          onSearch={(value) => setKeyword(value)}
+          style={{ width: 300 }}
+        />
+      </div>
+      <Collapse items={collapseItems} defaultActiveKey={filteredData.length > 0 ? [filteredData[0].word] : []} />
     </div>
   );
 }

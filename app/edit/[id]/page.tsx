@@ -116,10 +116,8 @@ export default function EditPage() {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card title={<Space><Link href={`/detail/${params.id}`}><Button icon={<ArrowLeftOutlined />}>返回</Button></Link><span style={{ fontSize: 20, fontWeight: 'bold' }}>编辑文言文</span></Space>}>
-        <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
-      </Card>
+    <div>
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
     </div>
   );
 }

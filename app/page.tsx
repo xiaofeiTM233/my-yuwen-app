@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button, Card, App, Popconfirm, Space, Tag } from 'antd';
+import { Button, App, Popconfirm, Space, Tag } from 'antd';
 import ClientProTable from './components/ClientProTable';
 import { PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import Link from 'next/link';
@@ -73,7 +73,6 @@ export default function Home() {
     { title: '作者', dataIndex: ['meta', 'author'], key: 'author', width: 120 },
     { title: '教材', dataIndex: ['meta', 'book'], key: 'book', width: 200, render: (text: any) => <Tag color="blue">{text}</Tag> },
     { title: '句子数', key: 'sentenceCount', width: 100, render: (_: any, record: any) => record.contents?.length || 0 },
-    { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', width: 180, render: (text: any) => text ? new Date(text).toLocaleString('zh-CN') : '-' },
     {
       title: '操作', key: 'action', width: 200,
       render: (_: any, record: any) => (
@@ -89,33 +88,28 @@ export default function Home() {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card title={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 24, fontWeight: 'bold' }}>📚 文言文翻译 - 新高考应考助手</span>
-          <Space>
-            <Link href="/xuci"><Button>虚词手册</Button></Link>
-            <Button onClick={handleInitData}>初始化示例数据</Button>
-            <Link href="/add"><Button type="primary" icon={<PlusOutlined />}>添加文言文</Button></Link>
-          </Space>
-        </div>
-      }>
-        <ClientProTable
-          columns={columns}
-          dataSource={data}
-          loading={loading}
-          rowKey="_id"
-          search={{ labelWidth: 'auto' }}
-          request={async (params) => {
-            const { current = 1, pageSize = 10, keyword = '' } = params;
-            await fetchData(current, pageSize, keyword as string);
-            return { data, total: pagination.total, success: true };
-          }}
-          pagination={{ ...pagination, showSizeChanger: true, showQuickJumper: true, showTotal: (total) => `共 ${total} 篇` }}
-          headerTitle="文言文列表"
-          options={{ density: true, fullScreen: true, reload: () => fetchData(pagination.current, pagination.pageSize), setting: true }}
-        />
-      </Card>
+    <div>
+      <div style={{ marginBottom: 16, textAlign: 'right' }}>
+        <Space>
+          <Button onClick={handleInitData}>初始化示例数据</Button>
+          <Link href="/add"><Button type="primary" icon={<PlusOutlined />}>添加文言文</Button></Link>
+        </Space>
+      </div>
+      <ClientProTable
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        rowKey="_id"
+        search={{ labelWidth: 'auto' }}
+        request={async (params) => {
+          const { current = 1, pageSize = 10, keyword = '' } = params;
+          await fetchData(current, pageSize, keyword as string);
+          return { data, total: pagination.total, success: true };
+        }}
+        pagination={{ ...pagination, showSizeChanger: true, showQuickJumper: true, showTotal: (total) => `共 ${total} 篇` }}
+        headerTitle="文言文列表"
+        options={{ density: true, fullScreen: true, reload: () => fetchData(pagination.current, pagination.pageSize), setting: true }}
+      />
     </div>
   );
 }
