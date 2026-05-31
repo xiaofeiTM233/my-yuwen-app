@@ -1,10 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ProLayout } from '@ant-design/pro-components';
-import { BookOutlined, HomeOutlined } from '@ant-design/icons';
+import { BookOutlined, HomeOutlined, RobotOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import AiSidebar from './AiSidebar';
 
 const menuRoutes = {
   route: {
@@ -18,19 +21,29 @@ const menuRoutes = {
 
 function ProLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [aiVisible, setAiVisible] = useState(false);
 
   return (
-    <ProLayout
-      title="文言文翻译"
-      logo={null}
-      {...menuRoutes}
-      location={{ pathname }}
-      menuItemRender={(item, dom) => <Link href={item.path || '/'}>{dom}</Link>}
-      fixSiderbar
-      layout="mix"
-    >
-      {children}
-    </ProLayout>
+    <>
+      <ProLayout
+        title="文言文翻译"
+        logo={null}
+        {...menuRoutes}
+        location={{ pathname }}
+        menuItemRender={(item, dom) => <Link href={item.path || '/'}>{dom}</Link>}
+        fixSiderbar
+        layout="mix"
+      >
+        <div style={{ marginRight: aiVisible ? 400 : 0, transition: 'margin-right 0.3s' }}>
+          {children}
+        </div>
+      </ProLayout>
+      <AiSidebar
+        visible={aiVisible}
+        onToggle={() => setAiVisible(!aiVisible)}
+        onDataUpdate={() => window.location.reload()}
+      />
+    </>
   );
 }
 
