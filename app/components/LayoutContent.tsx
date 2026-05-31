@@ -34,9 +34,7 @@ function ProLayoutContent({ children }: { children: React.ReactNode }) {
         fixSiderbar
         layout="mix"
       >
-        <div style={{ marginRight: aiVisible ? 400 : 0, transition: 'margin-right 0.3s' }}>
-          {children}
-        </div>
+        {children}
       </ProLayout>
       <AiSidebar
         visible={aiVisible}

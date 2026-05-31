@@ -14,6 +14,9 @@
   font-size: 12px;
   color: #666;
   font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .original-text {

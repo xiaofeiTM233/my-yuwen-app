@@ -87,8 +87,8 @@ async function executeFunction(name: string, args: any) {
 export async function POST(request: NextRequest) {
   try {
     const apiKey = process.env.AI_API_KEY;
-    const baseUrl = process.env.AI_BASE_URL || 'https://api.openai.com/v1';
-    const model = process.env.AI_MODEL || 'gpt-3.5-turbo';
+    const baseUrl = process.env.AI_BASE_URL;
+    const model = process.env.AI_MODEL;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
   contents: [
     {
       origin: "原文",
-      translations: [{ content: "翻译", types: ["直译"], start: 0, end: 2 }],
+      translations: [{ content: "翻译P1", types: ["一词多义"], start: 0, end: 2 }, { content: "翻译P2", types: ["倒装句"], start: 2, end: 4 }, { content: "翻译P3", types: ["补充内容"], start: null, end: null }],
       pronunciations: [{ index: 0, pinyin: "pin yin" }]
     }
   ]
