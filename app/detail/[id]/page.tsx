@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button, Card, Descriptions, Divider, message, Space, Tag, Tooltip, Typography } from 'antd';
+import { Button, Card, Collapse, Descriptions, Divider, message, Space, Tag, Tooltip, Typography } from 'antd';
 import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import './detail.css';
 
 const { Title } = Typography;
 
@@ -47,7 +48,6 @@ export default function DetailPage() {
     const pinyinMap: { [key: number]: string } = {};
     sentence.pronunciations.forEach((p) => { pinyinMap[p.index] = p.pinyin; });
 
-    // 找出每个字符对应的翻译片段
     const charTranslationMap: { [key: number]: number[] } = {};
     sentence.translations.forEach((trans, transIndex) => {
       if (trans.start != null && trans.end != null) {
@@ -68,10 +68,10 @@ export default function DetailPage() {
     };
 
     return (
-      <div key={sentenceIndex} style={{ marginBottom: 24, padding: 16, backgroundColor: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ marginBottom: 8, fontSize: 12, color: '#666', fontWeight: 'bold' }}>原文</div>
-          <div style={{ fontSize: 20, lineHeight: 2.5, fontFamily: 'serif' }}>
+      <div key={sentenceIndex} className="sentence-card">
+        <div className="sentence-section">
+          <div className="section-label">原文</div>
+          <div className="original-text">
             {chars.map((char, charIndex) => {
               const relatedTransIndices = charTranslationMap[charIndex] || [];
               const highlighted = isCharHighlighted(charIndex);
@@ -82,17 +82,12 @@ export default function DetailPage() {
                   }).join('\n')
                 : null;
 
+              const charClass = `char-span ${relatedTransIndices.length > 0 ? 'has-translation' : 'no-translation'} ${highlighted ? 'highlighted' : ''}`;
+
               const charSpan = (
                 <span
                   key={charIndex}
-                  style={{
-                    display: 'inline-block',
-                    textAlign: 'center',
-                    backgroundColor: highlighted ? '#ffe7ba' : 'transparent',
-                    borderRadius: 2,
-                    cursor: relatedTransIndices.length > 0 ? 'pointer' : 'default',
-                    transition: 'background-color 0.2s',
-                  }}
+                  className={charClass}
                   onMouseEnter={() => {
                     if (relatedTransIndices.length > 0) {
                       const trans = sentence.translations[relatedTransIndices[0]];
@@ -105,8 +100,8 @@ export default function DetailPage() {
                     setHoveredTransIndex(null);
                   }}
                 >
-                  {pinyinMap[charIndex] && <span style={{ display: 'block', fontSize: 12, color: '#1890ff', marginBottom: 2 }}>{pinyinMap[charIndex]}</span>}
-                  <span style={{ display: 'block', minWidth: 24 }}>{char}</span>
+                  {pinyinMap[charIndex] && <span className="pinyin">{pinyinMap[charIndex]}</span>}
+                  <span className="char-text">{char}</span>
                 </span>
               );
 
@@ -117,22 +112,19 @@ export default function DetailPage() {
             })}
           </div>
         </div>
-        <div style={{ borderTop: '1px dashed #d9d9d9', paddingTop: 12 }}>
-          <div style={{ fontSize: 12, color: '#666', fontWeight: 'bold' }}>翻译</div>
-          <div style={{ fontSize: 16, lineHeight: 2, color: '#333' }}>
+        <div className="translation-divider">
+          <div className="section-label">翻译</div>
+          <div className="translation-text">
             {sentence.translations.map((translation, transIndex) => {
               const highlighted = isTransHighlighted(transIndex);
               const tooltipContent = translation.types.length > 0 ? translation.types.join('、') : null;
 
+              const transClass = `trans-span ${translation.start != null ? 'has-range' : 'no-range'} ${highlighted ? 'highlighted' : ''}`;
+
               const transSpan = (
                 <span
                   key={transIndex}
-                  style={{
-                    backgroundColor: highlighted ? '#ffe7ba' : 'transparent',
-                    borderRadius: 2,
-                    cursor: translation.start != null ? 'pointer' : 'default',
-                    transition: 'background-color 0.2s',
-                  }}
+                  className={transClass}
                   onMouseEnter={() => {
                     if (translation.start != null && translation.end != null) {
                       setHoveredRange({ start: translation.start, end: translation.end });
@@ -155,22 +147,31 @@ export default function DetailPage() {
             })}
           </div>
         </div>
+        <Collapse
+          size="small"
+          style={{ marginTop: 12 }}
+          items={[{
+            key: 'data',
+            label: <span style={{ fontSize: 12, color: '#999' }}>数据</span>,
+            children: <pre style={{ margin: 0, fontSize: 12, whiteSpace: 'pre-wrap' }}>{JSON.stringify(sentence, null, 2)}</pre>,
+          }]}
+        />
       </div>
     );
   };
 
-  if (loading) return <div style={{ padding: 24, textAlign: 'center' }}><Card loading={true} /></div>;
+  if (loading) return <div className="empty-state"><Card loading={true} /></div>;
   if (!data) return (
-    <div style={{ padding: 24, textAlign: 'center' }}>
-      <Card><div>数据不存在</div><Link href="/"><Button style={{ marginTop: 16 }}>返回列表</Button></Link></Card>
+    <div className="empty-state">
+      <Card><div>数据不存在</div><Link href="/"><Button className="empty-state-button">返回列表</Button></Link></Card>
     </div>
   );
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="detail-page">
       <Card title={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Space><Link href="/"><Button icon={<ArrowLeftOutlined />}>返回</Button></Link><span style={{ fontSize: 20, fontWeight: 'bold' }}>{data.meta.title}</span></Space>
+        <div className="detail-header">
+          <Space><Link href="/"><Button icon={<ArrowLeftOutlined />}>返回</Button></Link><span className="detail-header-title">{data.meta.title}</span></Space>
           <Link href={`/edit/${data._id}`}><Button type="primary" icon={<EditOutlined />}>编辑</Button></Link>
         </div>
       }>
@@ -178,8 +179,6 @@ export default function DetailPage() {
           <Descriptions.Item label="标题">{data.meta.title}</Descriptions.Item>
           <Descriptions.Item label="作者">{data.meta.author}</Descriptions.Item>
           <Descriptions.Item label="教材" span={2}><Tag color="blue">{data.meta.book}</Tag></Descriptions.Item>
-          <Descriptions.Item label="创建时间">{new Date(data.createdAt).toLocaleString('zh-CN')}</Descriptions.Item>
-          <Descriptions.Item label="更新时间">{new Date(data.updatedAt).toLocaleString('zh-CN')}</Descriptions.Item>
         </Descriptions>
         <Divider><Title level={4} style={{ margin: 0 }}>逐句对照</Title></Divider>
         <div style={{ marginTop: 16 }}>{data.contents.map((sentence, index) => renderSentenceWithPinyin(sentence, index))}</div>
