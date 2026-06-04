@@ -16,7 +16,7 @@ const TranslationSchema = new mongoose.Schema({
 }, { _id: false });
 
 const ContentSchema = new mongoose.Schema({
-  origin: { type: String, required: true },
+  origin: { type: String },
   translations: [TranslationSchema],
   pronunciations: [PronunciationSchema],
 }, { _id: false });

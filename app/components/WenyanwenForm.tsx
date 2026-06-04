@@ -28,6 +28,10 @@ export default function WenyanwenForm({ initialData, onSubmit, isEdit = false }:
   const handleSubmit = async (values: WenyanwenFormData) => {
     setLoading(true);
     try {
+      // 空 origin 转为 null（分段标志）
+      values.contents.forEach((c: any) => {
+        if (c.origin === '' || c.origin === undefined) c.origin = null;
+      });
       await onSubmit(values);
       message.success(isEdit ? '更新成功' : '添加成功');
       router.push('/');
@@ -55,7 +59,7 @@ export default function WenyanwenForm({ initialData, onSubmit, isEdit = false }:
                 <Card key={field.key} size="small" title={`句子 ${index + 1}`}
                   extra={fields.length > 1 && <Button type="link" danger icon={<MinusCircleOutlined />} onClick={() => remove(field.name)}>删除句子</Button>}
                   style={{ marginBottom: 16 }}>
-                  <Form.Item name={[field.name, 'origin']} label="原文" rules={[{ required: true, message: '请输入原文' }]}><Input.TextArea rows={2} /></Form.Item>
+                  <Form.Item name={[field.name, 'origin']} label="原文" extra="留空表示分段标志"><Input.TextArea rows={2} /></Form.Item>
                   <Divider>注音</Divider>
                   <Form.List name={[field.name, 'pronunciations']}>
                     {(pronFields, { add: addPron, remove: removePron }) => (
@@ -80,7 +84,7 @@ export default function WenyanwenForm({ initialData, onSubmit, isEdit = false }:
                           <Card key={transField.key} size="small" style={{ marginBottom: 8 }}
                             extra={transFields.length > 1 && <Button type="link" danger icon={<MinusCircleOutlined />} onClick={() => removeTrans(transField.name)} size="small">删除</Button>}>
                             <Form.Item name={[transField.name, 'content']} label="翻译内容" rules={[{ required: true }]}><Input.TextArea rows={2} /></Form.Item>
-                            <Form.Item name={[transField.name, 'types']} label="翻译类型" rules={[{ required: true }]}>
+                            <Form.Item name={[transField.name, 'types']} label="翻译类型">
                               <Select mode="multiple" options={translationTypes.map((type) => ({ label: type, value: type }))} />
                             </Form.Item>
                             <Space>

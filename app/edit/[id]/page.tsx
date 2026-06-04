@@ -117,6 +117,14 @@ export default function EditPage() {
 
   return (
     <div>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Link href="/">
+          <Button icon={<ArrowLeftOutlined />}>返回列表</Button>
+        </Link>
+        <Link href={`/detail/${params.id}`}>
+          <Button type="primary">返回查看</Button>
+        </Link>
+      </div>
       <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
     </div>
   );

@@ -83,3 +83,149 @@
   background-color: #ffe7ba;
 }
 
+/* ===== 左右整段对照 ===== */
+.parallel-view {
+  display: flex;
+  gap: 0;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.parallel-column {
+  flex: 1;
+  min-width: 0;
+}
+
+.parallel-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #666;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.parallel-column-body {
+  padding: 20px 24px;
+  font-size: 18px;
+  line-height: 2;
+  color: #333;
+}
+
+.parallel-column-body.original-text {
+  font-size: 20px;
+  font-family: serif;
+}
+
+.parallel-divider {
+  width: 1px;
+  background: #e8e8e8;
+  flex-shrink: 0;
+}
+
+.paragraph-block {
+  display: block;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed #e8e8e8;
+}
+
+.paragraph-block:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* ===== 逐段对照 ===== */
+.paragraph-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.paragraph-card {
+  padding: 20px 24px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}
+
+.paragraph-original {
+  margin-bottom: 12px;
+}
+
+.paragraph-translation {
+  padding-top: 12px;
+  border-top: 1px dashed #d9d9d9;
+}
+
+/* 段落中的句子样式 */
+.sentence-in-paragraph {
+  display: inline;
+}
+
+/* 段落模式中的拼音和字符样式 */
+.paragraph-original .char-span,
+.parallel-column-body .char-span {
+  display: inline-block;
+  text-align: center;
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+
+.paragraph-original .char-span.has-translation,
+.parallel-column-body .char-span.has-translation {
+  cursor: pointer;
+}
+
+.paragraph-original .char-span.no-translation,
+.parallel-column-body .char-span.no-translation {
+  cursor: default;
+}
+
+.paragraph-original .char-span.highlighted,
+.parallel-column-body .char-span.highlighted {
+  background-color: #ffe7ba;
+}
+
+.paragraph-original .pinyin,
+.parallel-column-body .pinyin {
+  display: block;
+  font-size: 12px;
+  color: #1890ff;
+  margin-bottom: 2px;
+}
+
+.paragraph-original .char-text,
+.parallel-column-body .char-text {
+  display: block;
+  min-width: 24px;
+}
+
+/* 段落模式中的翻译文本样式 */
+.paragraph-translation .trans-span,
+.parallel-column-body.translation-text .trans-span {
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+
+.paragraph-translation .trans-span.has-range,
+.parallel-column-body.translation-text .trans-span.has-range {
+  cursor: pointer;
+}
+
+.paragraph-translation .trans-span.no-range,
+.parallel-column-body.translation-text .trans-span.no-range {
+  cursor: default;
+}
+
+.paragraph-translation .trans-span.highlighted,
+.parallel-column-body.translation-text .trans-span.highlighted {
+  background-color: #ffe7ba;
+}
+
