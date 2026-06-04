@@ -20,7 +20,7 @@ interface WenyanwenDetail {
   updatedAt: string;
 }
 
-// Tooltip 内容组件
+// 单条翻译 Tooltip（用于翻译区 hover）
 function TransTooltip({ translations, indices }: { translations: Translation[]; indices: number[] }) {
   return (
     <>
@@ -38,13 +38,27 @@ function TransTooltip({ translations, indices }: { translations: Translation[]; 
   );
 }
 
+// 重叠译文合并 Tooltip（用于原文字符 hover，内容用……连接，types/notes 去重合并）
+function MergedTransTooltip({ translations, indices }: { translations: Translation[]; indices: number[] }) {
+  const contents = indices.map(i => translations[i].content).filter(Boolean);
+  const allTypes = [...new Set(indices.flatMap(i => translations[i].types))];
+  const allNotes = [...new Set(indices.map(i => translations[i].note).filter(Boolean))];
+  return (
+    <>
+      <span>{contents.join('……')}</span>
+      {allTypes.length > 0 && <><br />{allTypes.join('、')}</>}
+      {allNotes.map((n, idx) => <span key={idx}><br />{n}</span>)}
+    </>
+  );
+}
+
 export default function DetailPage() {
   const { message } = App.useApp();
   const params = useParams();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<WenyanwenDetail | null>(null);
   const [hoveredRange, setHoveredRange] = useState<{ start: number; end: number } | null>(null);
-  const [hoveredTransIndex, setHoveredTransIndex] = useState<number | null>(null);
+  const [hoveredTransIndices, setHoveredTransIndices] = useState<number[]>([]);
   const [hoveredSentenceIndex, setHoveredSentenceIndex] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<string>('sentence');
 
@@ -100,7 +114,7 @@ export default function DetailPage() {
     };
 
     const isTransHighlighted = (transIndex: number) => {
-      return hoveredTransIndex === transIndex && hoveredSentenceIndex === sentenceIndex;
+      return hoveredSentenceIndex === sentenceIndex && hoveredTransIndices.includes(transIndex);
     };
 
     return (
@@ -115,13 +129,13 @@ export default function DetailPage() {
               const relatedTransIndices = charTranslationMap[charIndex] || [];
               const highlighted = isCharHighlighted(charIndex);
               
-              // 鼠标在翻译上时，只让高亮范围的第一个字符显示 tooltip，其他字符不显示任何 tooltip
-              // 鼠标在原文上或不在任何地方时，正常显示每个字符自己的翻译 tooltip
-              const isHoveringTranslation = hoveredTransIndex !== null && hoveredSentenceIndex === sentenceIndex;
+              // 鼠标在翻译上时，高亮并集范围的第一个字符显示全部重叠译文 tooltip
+              // 鼠标在原文上时，正常显示该字符覆盖的全部译文 tooltip
+              const isHoveringTranslation = hoveredTransIndices.length > 0 && hoveredSentenceIndex === sentenceIndex;
               const isFirstHighlightedChar = isHoveringTranslation &&
                 hoveredRange && charIndex === hoveredRange.start;
               const showTooltip = isHoveringTranslation ? isFirstHighlightedChar : relatedTransIndices.length > 0;
-              const tooltipIndices = isHoveringTranslation && isFirstHighlightedChar ? [hoveredTransIndex] : relatedTransIndices;
+              const tooltipIndices = isHoveringTranslation && isFirstHighlightedChar ? hoveredTransIndices : relatedTransIndices;
 
               const charClass = `char-span ${relatedTransIndices.length > 0 ? 'has-translation' : 'no-translation'} ${highlighted ? 'highlighted' : ''}`;
 
@@ -131,17 +145,19 @@ export default function DetailPage() {
                   className={charClass}
                   onMouseEnter={() => {
                     if (relatedTransIndices.length > 0) {
-                      const trans = sentence.translations[relatedTransIndices[0]];
-                      if (trans.start != null && trans.end != null) {
-                        setHoveredRange({ start: trans.start, end: trans.end });
+                      const firstTrans = sentence.translations[relatedTransIndices[0]];
+                      if (firstTrans.start != null && firstTrans.end != null) {
+                        const unionStart = Math.min(...relatedTransIndices.map(i => sentence.translations[i].start!));
+                        const unionEnd = Math.max(...relatedTransIndices.map(i => sentence.translations[i].end!));
+                        setHoveredRange({ start: unionStart, end: unionEnd });
                       }
-                      setHoveredTransIndex(relatedTransIndices[0]);
+                      setHoveredTransIndices(relatedTransIndices);
                       setHoveredSentenceIndex(sentenceIndex);
                     }
                   }}
                   onMouseLeave={() => {
                     setHoveredRange(null);
-                    setHoveredTransIndex(null);
+                    setHoveredTransIndices([]);
                     setHoveredSentenceIndex(null);
                   }}
                 >
@@ -157,7 +173,7 @@ export default function DetailPage() {
               );
 
               if (showTooltip) {
-                return <Tooltip key={charIndex} title={<TransTooltip translations={sentence.translations} indices={tooltipIndices} />} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
+                return <Tooltip key={charIndex} title={<MergedTransTooltip translations={sentence.translations} indices={tooltipIndices} />} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
               }
               return charSpan;
             })}
@@ -181,14 +197,21 @@ export default function DetailPage() {
                   className={transClass}
                   onMouseEnter={() => {
                     if (translation.start != null && translation.end != null) {
-                      setHoveredRange({ start: translation.start, end: translation.end });
+                      // 计算所有与当前翻译范围重叠的翻译，并集高亮
+                      const overlapping = sentence.translations
+                        .map((t, i) => ({ t, i }))
+                        .filter(({ t }) => t.start != null && t.end != null && t.start < translation.end! && t.end > translation.start!)
+                        .map(({ i }) => i);
+                      const unionStart = Math.min(...overlapping.map(i => sentence.translations[i].start!));
+                      const unionEnd = Math.max(...overlapping.map(i => sentence.translations[i].end!));
+                      setHoveredRange({ start: unionStart, end: unionEnd });
+                      setHoveredTransIndices(overlapping);
                     }
-                    setHoveredTransIndex(transIndex);
                     setHoveredSentenceIndex(sentenceIndex);
                   }}
                   onMouseLeave={() => {
                     setHoveredRange(null);
-                    setHoveredTransIndex(null);
+                    setHoveredTransIndices([]);
                     setHoveredSentenceIndex(null);
                   }}
                 >
@@ -197,7 +220,14 @@ export default function DetailPage() {
               );
 
               if (hasTooltip) {
-                return <Tooltip key={transIndex} title={<TransTooltip translations={sentence.translations} indices={[transIndex]} />} placement="bottom">{transSpan}</Tooltip>;
+                // 找出与当前翻译重叠的所有翻译
+                const overlapping = translation.start != null && translation.end != null
+                  ? sentence.translations
+                      .map((t, i) => ({ t, i }))
+                      .filter(({ t }) => t.start != null && t.end != null && t.start < translation.end! && t.end > translation.start!)
+                      .map(({ i }) => i)
+                  : [transIndex];
+                return <Tooltip key={transIndex} title={<MergedTransTooltip translations={sentence.translations} indices={overlapping} />} placement="bottom">{transSpan}</Tooltip>;
               }
               return transSpan;
             })}
@@ -284,10 +314,10 @@ export default function DetailPage() {
         const relatedTransIndices = charTranslationMap[charIndex] || [];
         const highlighted = isCharHighlighted(charIndex);
 
-        const isHoveringTranslation = hoveredTransIndex !== null && hoveredSentenceIndex === sentenceGlobalIndex;
+        const isHoveringTranslation = hoveredTransIndices.length > 0 && hoveredSentenceIndex === sentenceGlobalIndex;
         const isFirstHighlightedChar = isHoveringTranslation && hoveredRange && charIndex === hoveredRange.start;
         const showTooltip = isHoveringTranslation ? isFirstHighlightedChar : relatedTransIndices.length > 0;
-        const tooltipIndices = isHoveringTranslation && isFirstHighlightedChar ? [hoveredTransIndex] : relatedTransIndices;
+        const tooltipIndices = isHoveringTranslation && isFirstHighlightedChar ? hoveredTransIndices : relatedTransIndices;
 
         const charClass = `char-span ${relatedTransIndices.length > 0 ? 'has-translation' : 'no-translation'} ${highlighted ? 'highlighted' : ''}`;
 
@@ -297,17 +327,20 @@ export default function DetailPage() {
             className={charClass}
             onMouseEnter={() => {
               if (relatedTransIndices.length > 0) {
-                const trans = sentence.translations[relatedTransIndices[0]];
-                if (trans.start != null && trans.end != null) {
-                  setHoveredRange({ start: trans.start, end: trans.end });
+                const firstTrans = sentence.translations[relatedTransIndices[0]];
+                if (firstTrans.start != null && firstTrans.end != null) {
+                  // 计算所有相关翻译的范围并集
+                  const unionStart = Math.min(...relatedTransIndices.map(i => sentence.translations[i].start!));
+                  const unionEnd = Math.max(...relatedTransIndices.map(i => sentence.translations[i].end!));
+                  setHoveredRange({ start: unionStart, end: unionEnd });
                 }
-                setHoveredTransIndex(relatedTransIndices[0]);
+                setHoveredTransIndices(relatedTransIndices);
                 setHoveredSentenceIndex(sentenceGlobalIndex);
               }
             }}
             onMouseLeave={() => {
               setHoveredRange(null);
-              setHoveredTransIndex(null);
+              setHoveredTransIndices([]);
               setHoveredSentenceIndex(null);
             }}
           >
@@ -323,7 +356,7 @@ export default function DetailPage() {
         );
 
         if (showTooltip) {
-          return <Tooltip key={charIndex} title={<TransTooltip translations={sentence.translations} indices={tooltipIndices} />} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
+          return <Tooltip key={charIndex} title={<MergedTransTooltip translations={sentence.translations} indices={tooltipIndices} />} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
         }
         return charSpan;
       });
@@ -332,7 +365,7 @@ export default function DetailPage() {
     // 渲染带高亮联动的翻译文本
     const renderTranslationWithHighlight = (sentence: Content, sentenceGlobalIndex: number) => {
       const isTransHighlighted = (transIndex: number) => {
-        return hoveredTransIndex === transIndex && hoveredSentenceIndex === sentenceGlobalIndex;
+        return hoveredSentenceIndex === sentenceGlobalIndex && hoveredTransIndices.includes(transIndex);
       };
 
       return sentence.translations.map((translation, transIndex) => {
@@ -347,14 +380,20 @@ export default function DetailPage() {
             className={transClass}
             onMouseEnter={() => {
               if (translation.start != null && translation.end != null) {
-                setHoveredRange({ start: translation.start, end: translation.end });
+                const overlapping = sentence.translations
+                  .map((t, i) => ({ t, i }))
+                  .filter(({ t }) => t.start != null && t.end != null && t.start < translation.end! && t.end > translation.start!)
+                  .map(({ i }) => i);
+                const unionStart = Math.min(...overlapping.map(i => sentence.translations[i].start!));
+                const unionEnd = Math.max(...overlapping.map(i => sentence.translations[i].end!));
+                setHoveredRange({ start: unionStart, end: unionEnd });
+                setHoveredTransIndices(overlapping);
               }
-              setHoveredTransIndex(transIndex);
               setHoveredSentenceIndex(sentenceGlobalIndex);
             }}
             onMouseLeave={() => {
               setHoveredRange(null);
-              setHoveredTransIndex(null);
+              setHoveredTransIndices([]);
               setHoveredSentenceIndex(null);
             }}
           >
@@ -363,7 +402,13 @@ export default function DetailPage() {
         );
 
         if (hasTooltip) {
-          return <Tooltip key={transIndex} title={<TransTooltip translations={sentence.translations} indices={[transIndex]} />} placement="bottom">{transSpan}</Tooltip>;
+          const overlapping = translation.start != null && translation.end != null
+            ? sentence.translations
+                .map((t, i) => ({ t, i }))
+                .filter(({ t }) => t.start != null && t.end != null && t.start < translation.end! && t.end > translation.start!)
+                .map(({ i }) => i)
+            : [transIndex];
+          return <Tooltip key={transIndex} title={<MergedTransTooltip translations={sentence.translations} indices={overlapping} />} placement="bottom">{transSpan}</Tooltip>;
         }
         return transSpan;
       });
@@ -455,10 +500,10 @@ export default function DetailPage() {
         const relatedTransIndices = charTranslationMap[charIndex] || [];
         const highlighted = isCharHighlighted(charIndex);
 
-        const isHoveringTranslation = hoveredTransIndex !== null && hoveredSentenceIndex === sentenceGlobalIndex;
+        const isHoveringTranslation = hoveredTransIndices.length > 0 && hoveredSentenceIndex === sentenceGlobalIndex;
         const isFirstHighlightedChar = isHoveringTranslation && hoveredRange && charIndex === hoveredRange.start;
         const showTooltip = isHoveringTranslation ? isFirstHighlightedChar : relatedTransIndices.length > 0;
-        const tooltipIndices = isHoveringTranslation && isFirstHighlightedChar ? [hoveredTransIndex] : relatedTransIndices;
+        const tooltipIndices = isHoveringTranslation && isFirstHighlightedChar ? hoveredTransIndices : relatedTransIndices;
 
         const charClass = `char-span ${relatedTransIndices.length > 0 ? 'has-translation' : 'no-translation'} ${highlighted ? 'highlighted' : ''}`;
 
@@ -468,17 +513,19 @@ export default function DetailPage() {
             className={charClass}
             onMouseEnter={() => {
               if (relatedTransIndices.length > 0) {
-                const trans = sentence.translations[relatedTransIndices[0]];
-                if (trans.start != null && trans.end != null) {
-                  setHoveredRange({ start: trans.start, end: trans.end });
+                const firstTrans = sentence.translations[relatedTransIndices[0]];
+                if (firstTrans.start != null && firstTrans.end != null) {
+                  const unionStart = Math.min(...relatedTransIndices.map(i => sentence.translations[i].start!));
+                  const unionEnd = Math.max(...relatedTransIndices.map(i => sentence.translations[i].end!));
+                  setHoveredRange({ start: unionStart, end: unionEnd });
                 }
-                setHoveredTransIndex(relatedTransIndices[0]);
+                setHoveredTransIndices(relatedTransIndices);
                 setHoveredSentenceIndex(sentenceGlobalIndex);
               }
             }}
             onMouseLeave={() => {
               setHoveredRange(null);
-              setHoveredTransIndex(null);
+              setHoveredTransIndices([]);
               setHoveredSentenceIndex(null);
             }}
           >
@@ -494,7 +541,7 @@ export default function DetailPage() {
         );
 
         if (showTooltip) {
-          return <Tooltip key={charIndex} title={<TransTooltip translations={sentence.translations} indices={tooltipIndices} />} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
+          return <Tooltip key={charIndex} title={<MergedTransTooltip translations={sentence.translations} indices={tooltipIndices} />} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
         }
         return charSpan;
       });
@@ -503,7 +550,7 @@ export default function DetailPage() {
     // 渲染带高亮联动的翻译文本
     const renderTranslationWithHighlight = (sentence: Content, sentenceGlobalIndex: number) => {
       const isTransHighlighted = (transIndex: number) => {
-        return hoveredTransIndex === transIndex && hoveredSentenceIndex === sentenceGlobalIndex;
+        return hoveredSentenceIndex === sentenceGlobalIndex && hoveredTransIndices.includes(transIndex);
       };
 
       return sentence.translations.map((translation, transIndex) => {
@@ -518,14 +565,20 @@ export default function DetailPage() {
             className={transClass}
             onMouseEnter={() => {
               if (translation.start != null && translation.end != null) {
-                setHoveredRange({ start: translation.start, end: translation.end });
+                const overlapping = sentence.translations
+                  .map((t, i) => ({ t, i }))
+                  .filter(({ t }) => t.start != null && t.end != null && t.start < translation.end! && t.end > translation.start!)
+                  .map(({ i }) => i);
+                const unionStart = Math.min(...overlapping.map(i => sentence.translations[i].start!));
+                const unionEnd = Math.max(...overlapping.map(i => sentence.translations[i].end!));
+                setHoveredRange({ start: unionStart, end: unionEnd });
+                setHoveredTransIndices(overlapping);
               }
-              setHoveredTransIndex(transIndex);
               setHoveredSentenceIndex(sentenceGlobalIndex);
             }}
             onMouseLeave={() => {
               setHoveredRange(null);
-              setHoveredTransIndex(null);
+              setHoveredTransIndices([]);
               setHoveredSentenceIndex(null);
             }}
           >
@@ -534,7 +587,13 @@ export default function DetailPage() {
         );
 
         if (hasTooltip) {
-          return <Tooltip key={transIndex} title={<TransTooltip translations={sentence.translations} indices={[transIndex]} />} placement="bottom">{transSpan}</Tooltip>;
+          const overlapping = translation.start != null && translation.end != null
+            ? sentence.translations
+                .map((t, i) => ({ t, i }))
+                .filter(({ t }) => t.start != null && t.end != null && t.start < translation.end! && t.end > translation.start!)
+                .map(({ i }) => i)
+            : [transIndex];
+          return <Tooltip key={transIndex} title={<MergedTransTooltip translations={sentence.translations} indices={overlapping} />} placement="bottom">{transSpan}</Tooltip>;
         }
         return transSpan;
       });
