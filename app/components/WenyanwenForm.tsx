@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button, Card, Form, Input, Space, message, Divider, Select, InputNumber } from 'antd';
+import { Button, Card, Collapse, Form, Input, Space, message, Select, InputNumber, Table } from 'antd';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 
@@ -60,44 +60,68 @@ export default function WenyanwenForm({ initialData, onSubmit, isEdit = false }:
                   extra={fields.length > 1 && <Button type="link" danger icon={<MinusCircleOutlined />} onClick={() => remove(field.name)}>删除句子</Button>}
                   style={{ marginBottom: 16 }}>
                   <Form.Item name={[field.name, 'origin']} label="原文" extra="留空表示分段标志"><Input.TextArea rows={2} /></Form.Item>
-                  <Divider>注音</Divider>
-                  <Form.List name={[field.name, 'pronunciations']}>
-                    {(pronFields, { add: addPron, remove: removePron }) => (
-                      <>
-                        {pronFields.map((pronField) => (
-                          <Space key={pronField.key} align="baseline" style={{ marginBottom: 8 }}>
-                            <Form.Item name={[pronField.name, 'index']} rules={[{ required: true }]}><InputNumber placeholder="字索引" min={0} style={{ width: 100 }} /></Form.Item>
-                            <Form.Item name={[pronField.name, 'pinyin']} rules={[{ required: true }]}><Input placeholder="拼音" style={{ width: 120 }} /></Form.Item>
-                            <Form.Item name={[pronField.name, 'note']}><Input placeholder="说明（可选）" style={{ width: 160 }} /></Form.Item>
-                            <MinusCircleOutlined onClick={() => removePron(pronField.name)} />
-                          </Space>
-                        ))}
-                        <Button type="dashed" onClick={() => addPron()} icon={<PlusOutlined />} style={{ width: '100%' }}>添加注音</Button>
-                      </>
-                    )}
-                  </Form.List>
-                  <Divider>翻译</Divider>
-                  <Form.List name={[field.name, 'translations']}>
-                    {(transFields, { add: addTrans, remove: removeTrans }) => (
-                      <>
-                        {transFields.map((transField) => (
-                          <Card key={transField.key} size="small" style={{ marginBottom: 8 }}
-                            extra={transFields.length > 1 && <Button type="link" danger icon={<MinusCircleOutlined />} onClick={() => removeTrans(transField.name)} size="small">删除</Button>}>
-                            <Form.Item name={[transField.name, 'content']} label="翻译内容" rules={[{ required: true }]}><Input.TextArea rows={2} /></Form.Item>
-                            <Form.Item name={[transField.name, 'types']} label="翻译类型">
-                              <Select mode="multiple" options={translationTypes.map((type) => ({ label: type, value: type }))} />
-                            </Form.Item>
-                            <Space>
-                              <Form.Item name={[transField.name, 'start']} label="起始位置"><InputNumber min={0} style={{ width: 100 }} /></Form.Item>
-                              <Form.Item name={[transField.name, 'end']} label="结束位置"><InputNumber min={0} style={{ width: 100 }} /></Form.Item>
-                            </Space>
-                            <Form.Item name={[transField.name, 'note']} label="说明"><Input placeholder="说明（可选）" /></Form.Item>
-                          </Card>
-                        ))}
-                        <Button type="dashed" onClick={() => addTrans()} icon={<PlusOutlined />} style={{ width: '100%' }}>添加翻译</Button>
-                      </>
-                    )}
-                  </Form.List>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 12, alignItems: 'start' }}>
+                    <Form.List name={[field.name, 'translations']}>
+                      {(transFields, { add: addTrans, remove: removeTrans }) => (
+                        <Collapse
+                          size="small"
+                          items={[{
+                            key: 'trans',
+                            label: `翻译 (${transFields.length})`,
+                            children: (
+                              <>
+                                <Table
+                                  size="small"
+                                  pagination={false}
+                                  dataSource={transFields}
+                                  rowKey="key"
+                                  columns={[
+                                    { title: '翻译内容', dataIndex: 'content', width: 150, render: (_, __, i) => <Form.Item name={[i, 'content']} rules={[{ required: true }]} noStyle><Input.TextArea autoSize style={{ minHeight: 15 }} /></Form.Item> },
+                                    { title: '类型', dataIndex: 'types', width: 180, render: (_, __, i) => <Form.Item name={[i, 'types']} noStyle><Select mode="multiple" options={translationTypes.map(t => ({ label: t, value: t }))} style={{ width: '100%' }} /></Form.Item> },
+                                    { title: '起始', dataIndex: 'start', width: 80, render: (_, __, i) => <Form.Item name={[i, 'start']} noStyle><InputNumber min={0} style={{ width: '100%' }} /></Form.Item> },
+                                    { title: '结束', dataIndex: 'end', width: 80, render: (_, __, i) => <Form.Item name={[i, 'end']} noStyle><InputNumber min={0} style={{ width: '100%' }} /></Form.Item> },
+                                    { title: '说明', dataIndex: 'note', render: (_, __, i) => <Form.Item name={[i, 'note']} noStyle><Input placeholder="可选" /></Form.Item> },
+                                    { title: '', width: 48, render: (_, __, i) => <MinusCircleOutlined style={{ color: '#ff4d4f' }} onClick={() => removeTrans(i)} /> },
+                                  ]}
+                                  style={{ marginBottom: 8 }}
+                                />
+                                <Button type="dashed" onClick={() => addTrans()} icon={<PlusOutlined />} style={{ width: '100%' }}>添加翻译</Button>
+                              </>
+                            ),
+                          }]}
+                        />
+                      )}
+                    </Form.List>
+                    <Form.List name={[field.name, 'pronunciations']}>
+                      {(pronFields, { add: addPron, remove: removePron }) => (
+                        <Collapse
+                          size="small"
+                          items={[{
+                            key: 'pron',
+                            label: `注音 (${pronFields.length})`,
+                            children: (
+                              <>
+                                <Table
+                                  size="small"
+                                  pagination={false}
+                                  dataSource={pronFields}
+                                  rowKey="key"
+                                  columns={[
+                                    { title: '索引', dataIndex: 'index', width: 70, render: (_, __, i) => <Form.Item name={[i, 'index']} rules={[{ required: true }]} noStyle><InputNumber placeholder="索引" min={0} style={{ width: '100%' }} /></Form.Item> },
+                                    { title: '拼音', dataIndex: 'pinyin', width: 100, render: (_, __, i) => <Form.Item name={[i, 'pinyin']} rules={[{ required: true }]} noStyle><Input placeholder="拼音" /></Form.Item> },
+                                    { title: '说明', dataIndex: 'note', render: (_, __, i) => <Form.Item name={[i, 'note']} noStyle><Input placeholder="可选" /></Form.Item> },
+                                    { title: '', width: 36, render: (_, __, i) => <MinusCircleOutlined style={{ color: '#ff4d4f' }} onClick={() => removePron(i)} /> },
+                                  ]}
+                                  style={{ marginBottom: 8 }}
+                                />
+                                <Button type="dashed" onClick={() => addPron()} icon={<PlusOutlined />} style={{ width: '100%' }}>添加注音</Button>
+                              </>
+                            ),
+                          }]}
+                        />
+                      )}
+                    </Form.List>
+                  </div>
                 </Card>
               ))}
               <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />} style={{ width: '100%' }}>添加句子</Button>
