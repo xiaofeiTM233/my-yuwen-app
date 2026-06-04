@@ -20,6 +20,24 @@ interface WenyanwenDetail {
   updatedAt: string;
 }
 
+// Tooltip 内容组件
+function TransTooltip({ translations, indices }: { translations: Translation[]; indices: number[] }) {
+  return (
+    <>
+      {indices.map((i, idx) => {
+        const t = translations[i];
+        return (
+          <span key={i}>
+            {idx > 0 && <br />}
+            {t.content}{t.types.length > 0 && ` (${t.types.join('、')})`}
+            {t.note && <><br />{t.note}</>}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 export default function DetailPage() {
   const { message } = App.useApp();
   const params = useParams();
@@ -102,23 +120,8 @@ export default function DetailPage() {
               const isHoveringTranslation = hoveredTransIndex !== null && hoveredSentenceIndex === sentenceIndex;
               const isFirstHighlightedChar = isHoveringTranslation &&
                 hoveredRange && charIndex === hoveredRange.start;
-              let tooltipContent: string | null = null;
-              if (isHoveringTranslation) {
-                // 鼠标在翻译上：仅第一个高亮字符显示 tooltip
-                  if (isFirstHighlightedChar) {
-                  const trans = sentence.translations[hoveredTransIndex];
-                  tooltipContent = `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}${trans.note ? `\n${trans.note}` : ''}`;
-                }
-                // 其他字符：tooltipContent 保持 null，不显示 tooltip
-              } else {
-                // 鼠标不在翻译上：正常显示每个字符对应的翻译 tooltip
-                if (relatedTransIndices.length > 0) {
-                  tooltipContent = relatedTransIndices.map(i => {
-                    const trans = sentence.translations[i];
-                    return `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}${trans.note ? `\n${trans.note}` : ''}`;
-                  }).join('\n');
-                }
-              }
+              const showTooltip = isHoveringTranslation ? isFirstHighlightedChar : relatedTransIndices.length > 0;
+              const tooltipIndices = isHoveringTranslation && isFirstHighlightedChar ? [hoveredTransIndex] : relatedTransIndices;
 
               const charClass = `char-span ${relatedTransIndices.length > 0 ? 'has-translation' : 'no-translation'} ${highlighted ? 'highlighted' : ''}`;
 
@@ -153,8 +156,8 @@ export default function DetailPage() {
                 </span>
               );
 
-              if (tooltipContent) {
-                return <Tooltip key={charIndex} title={tooltipContent} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
+              if (showTooltip) {
+                return <Tooltip key={charIndex} title={<TransTooltip translations={sentence.translations} indices={tooltipIndices} />} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
               }
               return charSpan;
             })}
@@ -168,9 +171,7 @@ export default function DetailPage() {
           <div className="translation-text">
             {sentence.translations.map((translation, transIndex) => {
               const highlighted = isTransHighlighted(transIndex);
-              const tooltipContent = translation.types.length > 0 || translation.note
-                ? [translation.types.length > 0 ? translation.types.join('、') : '', translation.note ? `${translation.note}` : ''].filter(Boolean).join('\n')
-                : null;
+              const hasTooltip = translation.types.length > 0 || translation.note;
 
               const transClass = `trans-span ${translation.start != null ? 'has-range' : 'no-range'} ${highlighted ? 'highlighted' : ''}`;
 
@@ -195,8 +196,8 @@ export default function DetailPage() {
                 </span>
               );
 
-              if (tooltipContent) {
-                return <Tooltip key={transIndex} title={tooltipContent} placement="bottom">{transSpan}</Tooltip>;
+              if (hasTooltip) {
+                return <Tooltip key={transIndex} title={<TransTooltip translations={sentence.translations} indices={[transIndex]} />} placement="bottom">{transSpan}</Tooltip>;
               }
               return transSpan;
             })}
@@ -285,20 +286,8 @@ export default function DetailPage() {
 
         const isHoveringTranslation = hoveredTransIndex !== null && hoveredSentenceIndex === sentenceGlobalIndex;
         const isFirstHighlightedChar = isHoveringTranslation && hoveredRange && charIndex === hoveredRange.start;
-        let tooltipContent: string | null = null;
-        if (isHoveringTranslation) {
-          if (isFirstHighlightedChar) {
-            const trans = sentence.translations[hoveredTransIndex];
-            tooltipContent = `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}${trans.note ? `\n${trans.note}` : ''}`;
-          }
-        } else {
-          if (relatedTransIndices.length > 0) {
-            tooltipContent = relatedTransIndices.map(i => {
-              const trans = sentence.translations[i];
-              return `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}${trans.note ? `\n${trans.note}` : ''}`;
-            }).join('\n');
-          }
-        }
+        const showTooltip = isHoveringTranslation ? isFirstHighlightedChar : relatedTransIndices.length > 0;
+        const tooltipIndices = isHoveringTranslation && isFirstHighlightedChar ? [hoveredTransIndex] : relatedTransIndices;
 
         const charClass = `char-span ${relatedTransIndices.length > 0 ? 'has-translation' : 'no-translation'} ${highlighted ? 'highlighted' : ''}`;
 
@@ -333,8 +322,8 @@ export default function DetailPage() {
           </span>
         );
 
-        if (tooltipContent) {
-          return <Tooltip key={charIndex} title={tooltipContent} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
+        if (showTooltip) {
+          return <Tooltip key={charIndex} title={<TransTooltip translations={sentence.translations} indices={tooltipIndices} />} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
         }
         return charSpan;
       });
@@ -348,9 +337,7 @@ export default function DetailPage() {
 
       return sentence.translations.map((translation, transIndex) => {
         const highlighted = isTransHighlighted(transIndex);
-        const tooltipContent = translation.types.length > 0 || translation.note
-          ? [translation.types.length > 0 ? translation.types.join('、') : '', translation.note ? `${translation.note}` : ''].filter(Boolean).join('\n')
-          : null;
+        const hasTooltip = translation.types.length > 0 || translation.note;
 
         const transClass = `trans-span ${translation.start != null ? 'has-range' : 'no-range'} ${highlighted ? 'highlighted' : ''}`;
 
@@ -375,8 +362,8 @@ export default function DetailPage() {
           </span>
         );
 
-        if (tooltipContent) {
-          return <Tooltip key={transIndex} title={tooltipContent} placement="bottom">{transSpan}</Tooltip>;
+        if (hasTooltip) {
+          return <Tooltip key={transIndex} title={<TransTooltip translations={sentence.translations} indices={[transIndex]} />} placement="bottom">{transSpan}</Tooltip>;
         }
         return transSpan;
       });
@@ -470,20 +457,8 @@ export default function DetailPage() {
 
         const isHoveringTranslation = hoveredTransIndex !== null && hoveredSentenceIndex === sentenceGlobalIndex;
         const isFirstHighlightedChar = isHoveringTranslation && hoveredRange && charIndex === hoveredRange.start;
-        let tooltipContent: string | null = null;
-        if (isHoveringTranslation) {
-          if (isFirstHighlightedChar) {
-            const trans = sentence.translations[hoveredTransIndex];
-            tooltipContent = `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}${trans.note ? `\n${trans.note}` : ''}`;
-          }
-        } else {
-          if (relatedTransIndices.length > 0) {
-            tooltipContent = relatedTransIndices.map(i => {
-              const trans = sentence.translations[i];
-              return `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}${trans.note ? `\n${trans.note}` : ''}`;
-            }).join('\n');
-          }
-        }
+        const showTooltip = isHoveringTranslation ? isFirstHighlightedChar : relatedTransIndices.length > 0;
+        const tooltipIndices = isHoveringTranslation && isFirstHighlightedChar ? [hoveredTransIndex] : relatedTransIndices;
 
         const charClass = `char-span ${relatedTransIndices.length > 0 ? 'has-translation' : 'no-translation'} ${highlighted ? 'highlighted' : ''}`;
 
@@ -518,8 +493,8 @@ export default function DetailPage() {
           </span>
         );
 
-        if (tooltipContent) {
-          return <Tooltip key={charIndex} title={tooltipContent} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
+        if (showTooltip) {
+          return <Tooltip key={charIndex} title={<TransTooltip translations={sentence.translations} indices={tooltipIndices} />} placement="top" open={isFirstHighlightedChar ? true : undefined}>{charSpan}</Tooltip>;
         }
         return charSpan;
       });
@@ -533,9 +508,7 @@ export default function DetailPage() {
 
       return sentence.translations.map((translation, transIndex) => {
         const highlighted = isTransHighlighted(transIndex);
-        const tooltipContent = translation.types.length > 0 || translation.note
-          ? [translation.types.length > 0 ? translation.types.join('、') : '', translation.note ? `${translation.note}` : ''].filter(Boolean).join('\n')
-          : null;
+        const hasTooltip = translation.types.length > 0 || translation.note;
 
         const transClass = `trans-span ${translation.start != null ? 'has-range' : 'no-range'} ${highlighted ? 'highlighted' : ''}`;
 
@@ -560,8 +533,8 @@ export default function DetailPage() {
           </span>
         );
 
-        if (tooltipContent) {
-          return <Tooltip key={transIndex} title={tooltipContent} placement="bottom">{transSpan}</Tooltip>;
+        if (hasTooltip) {
+          return <Tooltip key={transIndex} title={<TransTooltip translations={sentence.translations} indices={[transIndex]} />} placement="bottom">{transSpan}</Tooltip>;
         }
         return transSpan;
       });

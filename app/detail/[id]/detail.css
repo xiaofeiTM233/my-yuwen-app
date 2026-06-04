@@ -32,7 +32,6 @@
   border-radius: 2px;
   transition: background-color 0.2s;
   position: relative;
-  padding-top: 16px;
   vertical-align: bottom;
 }
 
@@ -186,7 +185,6 @@
   border-radius: 2px;
   transition: background-color 0.2s;
   position: relative;
-  padding-top: 16px;
   vertical-align: bottom;
 }
 
