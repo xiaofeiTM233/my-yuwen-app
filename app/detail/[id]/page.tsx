@@ -9,8 +9,8 @@ import './detail.css';
 
 const { Title } = Typography;
 
-interface Pronunciation { index: number; pinyin: string; }
-interface Translation { content: string; types: string[]; start: number; end: number; }
+interface Pronunciation { index: number; pinyin: string; note?: string; }
+interface Translation { content: string; types: string[]; start: number; end: number; note?: string; }
 interface Content { origin: string; translations: Translation[]; pronunciations: Pronunciation[]; }
 interface WenyanwenDetail {
   _id: string;
@@ -54,7 +54,11 @@ export default function DetailPage() {
   const renderSentenceWithPinyin = (sentence: Content, sentenceIndex: number) => {
     const chars = sentence.origin.split('');
     const pinyinMap: { [key: number]: string } = {};
-    sentence.pronunciations.forEach((p) => { pinyinMap[p.index] = p.pinyin; });
+    const pinyinNoteMap: { [key: number]: string } = {};
+    sentence.pronunciations.forEach((p) => {
+      pinyinMap[p.index] = p.pinyin;
+      if (p.note) pinyinNoteMap[p.index] = p.note;
+    });
 
     const charTranslationMap: { [key: number]: number[] } = {};
     sentence.translations.forEach((trans, transIndex) => {
@@ -95,9 +99,9 @@ export default function DetailPage() {
               let tooltipContent: string | null = null;
               if (isHoveringTranslation) {
                 // 鼠标在翻译上：仅第一个高亮字符显示 tooltip
-                if (isFirstHighlightedChar) {
+                  if (isFirstHighlightedChar) {
                   const trans = sentence.translations[hoveredTransIndex];
-                  tooltipContent = `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}`;
+                  tooltipContent = `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}${trans.note ? `\n说明：${trans.note}` : ''}`;
                 }
                 // 其他字符：tooltipContent 保持 null，不显示 tooltip
               } else {
@@ -105,7 +109,7 @@ export default function DetailPage() {
                 if (relatedTransIndices.length > 0) {
                   tooltipContent = relatedTransIndices.map(i => {
                     const trans = sentence.translations[i];
-                    return `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}`;
+                    return `${trans.content}${trans.types.length > 0 ? ` (${trans.types.join('、')})` : ''}${trans.note ? `\n说明：${trans.note}` : ''}`;
                   }).join('\n');
                 }
               }
@@ -130,7 +134,13 @@ export default function DetailPage() {
                     setHoveredSentenceIndex(null);
                   }}
                 >
-                  {pinyinMap[charIndex] && <span className="pinyin">{pinyinMap[charIndex]}</span>}
+                  {pinyinMap[charIndex] && (
+                    pinyinNoteMap[charIndex] ? (
+                      <Tooltip title={pinyinNoteMap[charIndex]} placement="top"><span className="pinyin" style={{ cursor: 'help', borderBottom: '1px dotted #999' }}>{pinyinMap[charIndex]}</span></Tooltip>
+                    ) : (
+                      <span className="pinyin">{pinyinMap[charIndex]}</span>
+                    )
+                  )}
                   <span className="char-text">{char}</span>
                 </span>
               );
@@ -150,7 +160,9 @@ export default function DetailPage() {
           <div className="translation-text">
             {sentence.translations.map((translation, transIndex) => {
               const highlighted = isTransHighlighted(transIndex);
-              const tooltipContent = translation.types.length > 0 ? translation.types.join('、') : null;
+              const tooltipContent = translation.types.length > 0 || translation.note
+                ? [translation.types.length > 0 ? translation.types.join('、') : '', translation.note ? `说明：${translation.note}` : ''].filter(Boolean).join('\n')
+                : null;
 
               const transClass = `trans-span ${translation.start != null ? 'has-range' : 'no-range'} ${highlighted ? 'highlighted' : ''}`;
 

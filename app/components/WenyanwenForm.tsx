@@ -64,6 +64,7 @@ export default function WenyanwenForm({ initialData, onSubmit, isEdit = false }:
                           <Space key={pronField.key} align="baseline" style={{ marginBottom: 8 }}>
                             <Form.Item name={[pronField.name, 'index']} rules={[{ required: true }]}><InputNumber placeholder="字索引" min={0} style={{ width: 100 }} /></Form.Item>
                             <Form.Item name={[pronField.name, 'pinyin']} rules={[{ required: true }]}><Input placeholder="拼音" style={{ width: 120 }} /></Form.Item>
+                            <Form.Item name={[pronField.name, 'note']}><Input placeholder="说明（可选）" style={{ width: 160 }} /></Form.Item>
                             <MinusCircleOutlined onClick={() => removePron(pronField.name)} />
                           </Space>
                         ))}
@@ -86,6 +87,7 @@ export default function WenyanwenForm({ initialData, onSubmit, isEdit = false }:
                               <Form.Item name={[transField.name, 'start']} label="起始位置"><InputNumber min={0} style={{ width: 100 }} /></Form.Item>
                               <Form.Item name={[transField.name, 'end']} label="结束位置"><InputNumber min={0} style={{ width: 100 }} /></Form.Item>
                             </Space>
+                            <Form.Item name={[transField.name, 'note']} label="说明"><Input placeholder="说明（可选）" /></Form.Item>
                           </Card>
                         ))}
                         <Button type="dashed" onClick={() => addTrans()} icon={<PlusOutlined />} style={{ width: '100%' }}>添加翻译</Button>

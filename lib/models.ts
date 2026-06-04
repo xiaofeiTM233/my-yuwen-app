@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 const PronunciationSchema = new mongoose.Schema({
   index: { type: Number, required: true },
   pinyin: { type: String, required: true },
+  note: { type: String },
 }, { _id: false });
 
 const TranslationSchema = new mongoose.Schema({
@@ -11,6 +12,7 @@ const TranslationSchema = new mongoose.Schema({
   types: [{ type: String }],
   start: { type: Number },
   end: { type: Number },
+  note: { type: String },
 }, { _id: false });
 
 const ContentSchema = new mongoose.Schema({

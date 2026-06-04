@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
   contents: [
     {
       origin: "原文",
-      translations: [{ content: "翻译P1", types: ["一词多义"], start: 0, end: 2 }, { content: "翻译P2", types: ["倒装句"], start: 2, end: 4 }, { content: "翻译P3", types: ["补充内容"], start: null, end: null }],
-      pronunciations: [{ index: 0, pinyin: "pin yin" }]
+      translations: [{ content: "翻译P1", types: ["一词多义"], start: 0, end: 2, note: "说明" }, { content: "翻译P2", types: ["倒装句"], start: 2, end: 4 }, { content: "翻译P3", types: ["补充内容"], start: null, end: null }],
+      pronunciations: [{ index: 0, pinyin: "pin yin", note: "说明" }]
     }
   ]
 }
@@ -122,6 +122,7 @@ export async function POST(request: NextRequest) {
 translations 中的 start/end 是 0-based 左闭右开区间 [start, end)。
 types 可以是：直译、意译、补充内容、通假字、古今异义、词类活用、倒装句等。
 补充内容的 start/end 为 null。
+note 字段为可选说明，可用于注音和翻译的补充解释。
 
 虚词数据是静态的，包含：之、其、而、以、于、乃、为、因。
 
