@@ -1,8 +1,5 @@
 'use client';
 
-import { Card, Button, Space } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
-import Link from 'next/link';
 import WenyanwenForm from '../components/WenyanwenForm';
 
 export default function AddPage() {

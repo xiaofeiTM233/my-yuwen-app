@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Collapse, Tag, Input, Button, Space } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
-import Link from 'next/link';
+import { Collapse, Tag, Input, Space } from 'antd';
 import { xuciData } from '@/lib/xuci-data';
 
 const { Search } = Input;

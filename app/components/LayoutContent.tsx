@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ProLayout } from '@ant-design/pro-components';
-import { BookOutlined, HomeOutlined, RobotOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
+import { BookOutlined, HomeOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import AiSidebar from './AiSidebar';
